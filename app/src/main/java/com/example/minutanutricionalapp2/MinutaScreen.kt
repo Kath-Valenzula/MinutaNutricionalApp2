@@ -39,7 +39,7 @@ fun MinutaScreen(navController: NavController) {
     var orderByCalsAsc by remember { mutableStateOf(true) }
     val days = listOf("Todos", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
 
-    // Estado del combo/drowpdown
+    // Estado del combo
     var expanded by remember { mutableStateOf(false) }
 
     // Aplicar filtros/orden
@@ -65,7 +65,7 @@ fun MinutaScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Combo Día (Material 3)
+                // Combo Día
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded },
@@ -78,7 +78,7 @@ fun MinutaScreen(navController: NavController) {
                         label = { Text("Día") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                         modifier = Modifier
-                            .menuAnchor()        // correcto en M3 (sin parámetros)
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)  // ✅ sin warning
                             .fillMaxWidth()
                     )
                     ExposedDropdownMenu(
@@ -156,3 +156,4 @@ fun MinutaScreen(navController: NavController) {
         }
     }
 }
+
