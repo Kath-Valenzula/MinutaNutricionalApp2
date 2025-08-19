@@ -12,9 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
+// ---- Datos de ejemplo ----
 data class Recipe(
     val title: String,
-    val day: String,      // Lunes, Martes, ...
+    val day: String,
     val calories: Int,
     val tags: List<String>,
     val notes: String
@@ -31,18 +32,25 @@ private val veganRecipes = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MinutaScreen(navController: NavController) {
+
+    // Filtros
     var selectedDay by remember { mutableStateOf("Todos") }
     var onlyLowCal by remember { mutableStateOf(false) }
     var orderByCalsAsc by remember { mutableStateOf(true) }
     val days = listOf("Todos", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
+
+    // Estado del combo/drowpdown
     var expanded by remember { mutableStateOf(false) }
 
+    // Aplicar filtros/orden
     val filtered = veganRecipes
         .filter { selectedDay == "Todos" || it.day == selectedDay }
         .filter { if (onlyLowCal) it.calories <= 500 else true }
         .let { list -> if (orderByCalsAsc) list.sortedBy { it.calories } else list.sortedByDescending { it.calories } }
 
-    Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("Minuta semanal (vegana)") }) }) { inner ->
+    Scaffold(
+        topBar = { CenterAlignedTopAppBar(title = { Text("Minuta semanal (vegana)") }) }
+    ) { inner ->
         Column(
             Modifier
                 .padding(inner)
@@ -50,9 +58,14 @@ fun MinutaScreen(navController: NavController) {
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Filtros
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                // Combo día
+
+            // --- Filtros superiores ---
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Combo Día (Material 3)
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded },
@@ -65,27 +78,33 @@ fun MinutaScreen(navController: NavController) {
                         label = { Text("Día") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                         modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable) // ✅ warning eliminado
+                            .menuAnchor()        // correcto en M3 (sin parámetros)
                             .fillMaxWidth()
                     )
-                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
                         days.forEach { d ->
                             DropdownMenuItem(
                                 text = { Text(d) },
-                                onClick = { selectedDay = d; expanded = false }
+                                onClick = {
+                                    selectedDay = d
+                                    expanded = false
+                                }
                             )
                         }
                     }
                 }
 
-                // Check (bajas calorías)
+                // Check ≤ 500 kcal
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = onlyLowCal, onCheckedChange = { onlyLowCal = it })
                     Text("≤ 500 kcal")
                 }
             }
 
-            // Radio: ordenar por calorías
+            // Radio: Orden por calorías
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = orderByCalsAsc, onClick = { orderByCalsAsc = true })
@@ -97,7 +116,7 @@ fun MinutaScreen(navController: NavController) {
                 }
             }
 
-            // Grilla de recetas
+            // --- Grilla de recetas ---
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(220.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -106,16 +125,26 @@ fun MinutaScreen(navController: NavController) {
             ) {
                 items(filtered) { recipe ->
                     ElevatedCard {
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(recipe.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                            Text("${recipe.day} • ${recipe.calories} kcal", style = MaterialTheme.typography.bodyMedium)
+                        Column(
+                            Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                recipe.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                "${recipe.day} • ${recipe.calories} kcal",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                             AssistChip(onClick = {}, label = { Text(recipe.tags.joinToString()) })
                             Text(recipe.notes, style = MaterialTheme.typography.bodySmall)
                             Spacer(Modifier.height(6.dp))
                             Button(
                                 onClick = {
                                     val encodedTitle = Uri.encode(recipe.title)
-                                    val encodedTips  = Uri.encode("Consejo: hidrátate bien y prioriza verduras de hoja.")
+                                    val encodedTips = Uri.encode("Consejo: hidrátate bien y prioriza verduras de hoja.")
                                     navController.navigate("detail/$encodedTitle/$encodedTips")
                                 },
                                 modifier = Modifier.fillMaxWidth()

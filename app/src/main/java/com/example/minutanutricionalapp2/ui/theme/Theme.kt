@@ -1,28 +1,35 @@
 package com.example.minutanutricionalapp2.ui.theme
 
-import androidx.compose.material3.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
-private val PinkPrimary = Color(0xFFE91E63)   // Rosa
-private val PinkSecondary = Color(0xFFF06292) // Rosa claro
-private val PinkTertiary = Color(0xFFFFC1E3)  // Rosa muy claro
-
-private val AppColors = lightColorScheme(
+private val LightColors: ColorScheme = lightColorScheme(
     primary = PinkPrimary,
-    onPrimary = Color.White,
-    secondary = PinkSecondary,
-    onSecondary = Color.White,
-    tertiary = PinkTertiary,
-    surface = Color(0xFFFFF7FA),
-    onSurface = Color(0xFF3A3A3A)
+    onPrimary = PinkOnPrimary,
+    primaryContainer = PinkContainer,
+    onPrimaryContainer = OnPinkContainer
+)
+
+private val DarkColors: ColorScheme = darkColorScheme(
+    primary = PinkPrimary,
+    onPrimary = PinkOnPrimary,
+    primaryContainer = PinkContainer,
+    onPrimaryContainer = OnPinkContainer
 )
 
 @Composable
-fun MinutaNutricionalApp2Theme(content: @Composable () -> Unit) {
+fun MinutaNutricionalApp2Theme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colors = if (darkTheme) DarkColors else LightColors
     MaterialTheme(
-        colorScheme = AppColors,
-        typography = Typography(),
+        colorScheme = colors,
+        typography = Typography,
         content = content
     )
 }

@@ -17,9 +17,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -37,16 +38,20 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Receta", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("Receta") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.semantics { contentDescription = "Volver atrás" }
+                    ) {
+                        // contentDescription en el Icon va en null porque ya lo
+                        // expusimos en el IconButton para lectores de pantalla
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = null
                         )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors()
+                }
             )
         }
     ) { inner ->

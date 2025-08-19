@@ -1,25 +1,57 @@
 package com.example.minutanutricionalapp2
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
-    var showError by remember { mutableStateOf(false) }
+    var showHint by remember { mutableStateOf(false) }
 
-    Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("Iniciar sesión") }) }) { inner ->
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    fun isValidEmail(s: String) = s.contains("@") && s.contains(".")
+
+    Scaffold(
+        topBar = { CenterAlignedTopAppBar(title = { Text("Iniciar sesión") }) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { inner ->
         Column(
             modifier = Modifier
                 .padding(inner)
@@ -29,40 +61,61 @@ fun LoginScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
-                value = email, onValueChange = { email = it },
+                value = email,
+                onValueChange = { email = it },
                 label = { Text("Correo") },
-                leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-                singleLine = true, modifier = Modifier.fillMaxWidth()
+                leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Icono de correo") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = pass, onValueChange = { pass = it },
+                value = pass,
+                onValueChange = { pass = it },
                 label = { Text("Contraseña") },
-                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Icono de candado") },
+                singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
-                singleLine = true, modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
 
             Button(
                 onClick = {
-                    if (email.isNotBlank() && pass.isNotBlank()) {
+                    if (email.isNotBlank() && pass.isNotBlank() && isValidEmail(email)) {
                         navController.navigate(Screen.Minuta.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
-                    } else showError = true
+                    } else {
+                        scope.launch { snackbarHostState.showSnackbar("Revisa correo y contraseña") }
+                        showHint = true
+                    }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .semantics { contentDescription = "Botón entrar" }
             ) { Text("Entrar") }
 
-            TextButton(onClick = { navController.navigate(Screen.Recover.route) }) {
-                Text("¿Olvidaste tu contraseña?")
-            }
-            OutlinedButton(onClick = { navController.navigate(Screen.Register.route) }) {
-                Text("Crear cuenta")
-            }
+            TextButton(
+                onClick = { navController.navigate(Screen.Recover.route) },
+                modifier = Modifier
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .semantics { contentDescription = "Olvidé mi contraseña" }
+            ) { Text("¿Olvidaste tu contraseña?") }
 
-            if (showError) {
-                AssistChip(onClick = { showError = false }, label = { Text("Completa correo y contraseña") })
+            OutlinedButton(
+                onClick = { navController.navigate(Screen.Register.route) },
+                modifier = Modifier
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .semantics { contentDescription = "Crear cuenta nueva" }
+            ) { Text("Crear cuenta") }
+
+            if (showHint) {
+                AssistChip(
+                    onClick = { showHint = false },
+                    label = { Text("Completa correo y contraseña válidos") }
+                )
             }
         }
     }
 }
+
