@@ -12,11 +12,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -38,14 +40,13 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Receta") },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(),
+                title = { Text("Receta", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(
                         onClick = { navController.popBackStack() },
                         modifier = Modifier.semantics { contentDescription = "Volver atrás" }
                     ) {
-                        // contentDescription en el Icon va en null porque ya lo
-                        // expusimos en el IconButton para lectores de pantalla
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
@@ -78,15 +79,23 @@ private fun DetailContent(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
+
+        HorizontalDivider() // ← reemplaza al Divider deprecado
+
         Text(
             text = "Ingredientes (sugeridos):\n• Garbanzos cocidos\n• Palta\n• Tomate cherry\n• Quínoa\n• Limón y aceite de oliva",
             style = MaterialTheme.typography.bodyMedium
         )
+
+        HorizontalDivider()
+
         Text(
             text = "Pasos:\n1) Mezcla los ingredientes.\n2) Aliña con limón y aceite.\n3) Sirve frío.",
             style = MaterialTheme.typography.bodyMedium
         )
+
         if (tips.isNotBlank()) {
+            HorizontalDivider()
             Text(
                 text = "Tips nutricionales:",
                 style = MaterialTheme.typography.titleMedium,
