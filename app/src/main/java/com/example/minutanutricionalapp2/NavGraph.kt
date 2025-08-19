@@ -12,7 +12,7 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object Recover  : Screen("recover")
     object Minuta   : Screen("minuta")
-    object Detail   : Screen("detail/{title}/{tips}")   // <- NUEVA RUTA
+    object Detail   : Screen("detail/{title}/{tips}")
 }
 
 @Composable
