@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.RamenDining
 import androidx.compose.material3.*
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import com.example.minutanutricionalapp2.data.IntakeTracker
 import com.example.minutanutricionalapp2.data.NutritionRepository
 import com.example.minutanutricionalapp2.data.RecipesRepository
 import com.example.minutanutricionalapp2.model.Recipe
+import kotlinx.coroutines.launch
 
 @Composable
 fun MinutaScreen(nav: NavController) {
@@ -43,6 +45,8 @@ fun MinutaScreen(nav: NavController) {
     }
 
     val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = { TopAppBar(title = { Text("Minuta semanal") }) },
         snackbarHost = { SnackbarHost(snackbar) }
@@ -55,10 +59,8 @@ fun MinutaScreen(nav: NavController) {
                 .semantics { contentDescription = "Pantalla Minuta semanal con filtros y grilla" },
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Totales del día (acumula lo agregado)
             TotalsBar()
 
-            // Filtros con selector real de día
             FilterRow(
                 days = days,
                 selectedDay = selectedDay,
@@ -86,7 +88,7 @@ fun MinutaScreen(nav: NavController) {
                         onAdd = {
                             NutritionRepository.get(r.id)?.let { n ->
                                 IntakeTracker.add(n)
-                                LaunchedEffect(r.id) {
+                                scope.launch {
                                     snackbar.showSnackbar("Agregado: ${r.title}")
                                 }
                             }
@@ -137,7 +139,7 @@ private fun FilterRow(
                     label = { Text("Día") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                     modifier = Modifier
-                        .menuAnchor()
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                         .fillMaxWidth()
                 )
                 ExposedDropdownMenu(
@@ -206,7 +208,6 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
                 recipe.tags.take(3).forEach { tag -> AssistChip(onClick = {}, label = { Text(tag) }) }
             }
             Spacer(Modifier.weight(1f, fill = true))
-            // Acciones
             Button(
                 onClick = onAdd,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
