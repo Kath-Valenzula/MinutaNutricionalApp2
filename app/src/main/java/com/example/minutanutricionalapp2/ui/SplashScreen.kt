@@ -45,7 +45,7 @@ fun SplashScreen(navController: NavController) {
         }
     }
 
-    // Navega a Login tras 5s y cierra el Splash del back stack
+    // Navega a Login tras 10s y cierra el Splash del back stack
     LaunchedEffect(Unit) {
         delay(5000)
         navController.navigate("login") {
@@ -78,7 +78,7 @@ fun SplashScreen(navController: NavController) {
                 modifier = Modifier.size(160.dp).alpha(alpha)
             )
             Text(
-                text = "bienvenido nuevamente a tu minuta diaria",
+                text = "Bienvenido nuevamente!!",
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
