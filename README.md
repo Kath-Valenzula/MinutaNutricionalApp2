@@ -1,113 +1,82 @@
-# MinutaNutricionalApp
 
-Aplicación Android (Jetpack Compose) para gestionar una minuta semanal con recetas veganas. Incluye flujo de autenticación básico (inicio de sesión, registro y recuperación de contraseña), una pantalla principal con filtros y grilla de recetas, y una pantalla de detalle.
+# MinutaNutricionalApp2
 
-## Características principales
+Aplicación Android en **Kotlin + Jetpack Compose** para gestionar una minuta nutricional semanal, con navegación, filtros, detalle nutricional y pantalla de bienvenida con logo y audio.
 
-* Cuatro pantallas: Login, Registro, Recuperar contraseña y Minuta semanal.
-* Detalle de receta al tocar “Ver receta completa”.
-* Filtros en la minuta: día de la semana, opción de bajas calorías y orden por calorías asc/desc.
-* Grilla adaptativa de recetas usando `LazyVerticalGrid`.
-* Navegación con `androidx.navigation:navigation-compose`.
-* UI con Material 3 y paleta con acento rosado.
-* Diseño pensado para usuarios con baja experiencia informática: inputs claros, botones visibles y textos directos.
 
-## Requisitos
-
-* Android Studio Ladybug o superior.
-* JDK 17 (el IDE lo gestiona).
-* Gradle y Kotlin DSL (proyecto ya configurado).
-* SDK Android 24+ (la app apunta a API recientes, pero corre desde Nougat en adelante).
-
-## Tecnologías y librerías
-
-* Kotlin y Jetpack Compose.
-* Material 3 (`androidx.compose.material3`).
-* Navigation Compose (`androidx.navigation:navigation-compose`).
-* Foundation / Lazy grid para grillas adaptativas.
-
-## Estructura relevante
-
-```
-app/
- └─ src/main/java/com/example/minutanutricionalapp2/
-     ├─ MainActivity.kt
-     ├─ NavGraph.kt
-     ├─ LoginScreen.kt
-     ├─ RegisterScreen.kt
-     ├─ RecoverScreen.kt
-     ├─ MinutaScreen.kt
-     └─ DetailScreen.kt
+## Estructura principal
 ```
 
-## Configuración y ejecución
+app/src/main/java/com/example/minutanutricionalapp2/
+├─ data/
+│  ├─ RecipesRepository.kt
+│  ├─ NutritionRepository.kt
+│  └─ IntakeTracker.kt
+├─ model/
+│  └─ Recipe.kt
+│  └─ Nutrition.kt
+├─ ui/
+│  ├─ SplashScreen.kt
+│  ├─ MinutaScreen.kt
+│  ├─ DetailScreen.kt
+│  └─ (LoginScreen.kt, RegisterScreen.kt, RecoverScreen.kt)\*
+├─ NavGraph.kt
+└─ MainActivity.kt
+app/src/main/res/
+├─ drawable/        (logo kath\_cl.png)
+└─ raw/             (tema\_pokemon.ogg)
 
-1. Abrir el proyecto en Android Studio.
-2. Sincronizar Gradle si el IDE lo solicita.
-3. Seleccionar un dispositivo virtual (AVD) o un teléfono físico con depuración USB.
-4. Ejecutar la configuración `app`.
+---
 
-La app abre en la pantalla de Login. Con correo y contraseña no vacíos se ingresa a la Minuta.
+## Funcionalidades clave
 
-## Navegación
+- **Pantalla de bienvenida (Splash)**: fondo rosa, logo y mensaje; audio OGG durante 10 s; navegación automática a Login.
+- **Minuta semanal**:
+  - Selector de **día** con `ExposedDropdownMenuBox`.
+  - **Checkbox** ≤ 500 kcal.
+  - **RadioButtons** para orden por calorías (↑/↓).
+  - Grilla adaptativa con `LazyVerticalGrid`.
+  - Tarjeta por receta (título, kcal, tags) con botón “**Agregar a mi día**”.
+  - **Barra de Totales** (kcal, proteínas, carbohidratos, grasas) acumulada en runtime.
+  - **Snackbar** de confirmación al agregar.
+  - Bloque de **estadísticas Kotlin** (uso de `fold`, `when`, `while`, `break/continue`).
+- **Detalle de receta**: tabla nutricional (kcal, macros y vitaminas).
 
-* El grafo de navegación está en `NavGraph.kt`.
-* Rutas definidas: `login`, `register`, `recover`, `minuta`, `detail/{title}/{tips}`.
-* Para el detalle se codifican parámetros con `Uri.encode` y se decodifican en `DetailScreen`.
+---
 
-Ejemplo de navegación desde la minuta al detalle:
+## Componentes de UI
 
-```kotlin
-val encodedTitle = Uri.encode(recipe.title)
-val encodedTips  = Uri.encode("Consejo: hidrátate bien y prioriza verduras de hoja.")
-navController.navigate("detail/$encodedTitle/$encodedTips")
-```
+- **Inputs/Texto**: `OutlinedTextField`, `Text`, tipografías Material 3.
+- **Combo**: `ExposedDropdownMenuBox` + `DropdownMenuItem`.
+- **Checklist**: `Checkbox` (filtro ≤ 500 kcal).
+- **Radio**: `RadioButton` (orden asc/desc).
+- **Botones**: `Button`, `OutlinedButton`, `TextButton`.
+- **Grilla/Tabla**: `LazyVerticalGrid(GridCells.Adaptive)`, filas clave-valor en detalle.
+- **Navegación**: `NavController` + `NavHost` + `composable` con argumentos.
+- **Accesibilidad**: `semantics { contentDescription = ... }`, targets ≥48dp, contraste `primary`/`onPrimary`.
 
-## Datos de ejemplo
+---
 
-`MinutaScreen.kt` incluye una lista `veganRecipes` con recetas de muestra (título, día, calorías, etiquetas y notas). Está pensada para cumplir con el requisito de “array con al menos 5 recetas y recomendaciones”.
+## Accesibilidad
+- **Semánticas** descriptivas para TalkBack en pantallas, tarjetas y botones.
+- **Contraste** garantizado usando `MaterialTheme.colorScheme.primary` / `onPrimary`.
+- **Tamaño táctil** de acciones ≥48dp.
+- Flujo **Arriba/Atrás** coherente (`popBackStack()`).
 
-## Diseño y estilo
+---
 
-* Material 3 con superficies y controles estándar.
-* Tono rosado aplicado en la paleta del tema del módulo `ui.theme`.
-* Tipografías y tamaños por defecto de Material para asegurar legibilidad.
-* Botones de acción con `Text`, `OutlinedTextField` con `leadingIcon` en formularios y `AssistChip` para etiquetas de receta.
+## Logo y audio del Splash
+- Colocar el **logo** en `app/src/main/res/drawable/kath_cl.png`.
+- Colocar el **audio** en `app/src/main/res/raw/tema_pokemon.ogg`.  
+  - Recomendado: **OGG Vorbis**, 44.1 kHz, 128–160 kbps.  
+  - Nombre en minúsculas, sin espacios ni tildes.
+- Nota de licencia: confirma que tienes autorización para uso académico del audio/logos.
 
-## Accesibilidad y usabilidad
+---
 
-* Etiquetas descriptivas en campos y botones.
-* Jerarquía tipográfica clara: títulos, cuerpo, chips informativos.
-* Navegación predecible con barra superior y flecha de retorno en pantallas secundarias.
+## Créditos y licencias
 
-## Calidad y mantenimiento
+* UI: Material 3 + Jetpack Compose.
+* El **logo** y el **audio** son propiedad de kath y la cancion de Pokemón. Úsalos con fines educativos, respetando derechos de autor.
+* Código del estudiante, uso académico.
 
-* Código organizado por pantallas y navegación.
-* Dependencias actualizadas a versiones estables.
-* Sin dependencias experimentales en producción.
-* Warning de `menuAnchor()` resuelto usando `MenuAnchorType.PrimaryNotEditable`.
-
-## Pruebas manuales sugeridas
-
-* Ingresar con email y contraseña vacíos para verificar el aviso.
-* Flujo Login → Minuta → “Ver receta completa” → volver.
-* Registro y Recuperación: navegación y carga visual.
-* Filtros de la minuta: seleccionar día, alternar “≤ 500 kcal”, cambiar orden.
-* Rotación de dispositivo y comprobación de que la UI se adapta.
-
-## Problemas comunes
-
-* Emulador atascado: usar Cold Boot desde **Device Manager**.
-* Diferencia entre JAVA\_HOME y JDK de Gradle: alinear la versión desde Settings → Build Tools → Gradle → Gradle JDK.
-* Antivirus impactando compilación: excluir carpetas `.gradle`, `AndroidStudioProjects`, `Sdk` y el directorio del IDE.
-
-## Próximos pasos
-
-* Persistencia local (Room) para guardar recetas y preferencias de filtros.
-* Autenticación real (Firebase Auth) y validaciones de formularios.
-* Edición y creación de recetas propias.
-* Tests instrumentados para navegación y UI.
-
-## Licencia
-
-Este proyecto se entrega con fines académicos. Ajustar licencia según las necesidades del curso o del autor.
