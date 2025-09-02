@@ -1,5 +1,6 @@
 package com.example.minutanutricionalapp2
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -26,7 +27,6 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.Recover.route)  { RecoverScreen(navController) }
         composable(Screen.Minuta.route)   { MinutaScreen(navController) }
 
-        // detalle
         composable(
             route = Screen.Detail.route,
             arguments = listOf(
@@ -34,8 +34,12 @@ fun AppNavGraph(navController: NavHostController) {
                 navArgument("tips")  { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val title = backStackEntry.arguments?.getString("title")
-            val tips  = backStackEntry.arguments?.getString("tips")
+            val title = backStackEntry.arguments
+                ?.getString("title")
+                ?.let { Uri.decode(it) }
+            val tips  = backStackEntry.arguments
+                ?.getString("tips")
+                ?.let { Uri.decode(it) }
             DetailScreen(navController, title, tips)
         }
     }
