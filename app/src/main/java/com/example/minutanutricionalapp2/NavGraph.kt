@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.minutanutricionalapp2.ui.MinutaScreen
 
 sealed class Screen(val route: String) {
     object Login    : Screen("login")
@@ -34,12 +35,8 @@ fun AppNavGraph(navController: NavHostController) {
                 navArgument("tips")  { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val title = backStackEntry.arguments
-                ?.getString("title")
-                ?.let { Uri.decode(it) }
-            val tips  = backStackEntry.arguments
-                ?.getString("tips")
-                ?.let { Uri.decode(it) }
+            val title = backStackEntry.arguments?.getString("title")?.let { Uri.decode(it) }
+            val tips  = backStackEntry.arguments?.getString("tips")?.let { Uri.decode(it) }
             DetailScreen(navController, title, tips)
         }
     }

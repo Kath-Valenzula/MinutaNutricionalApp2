@@ -1,3 +1,6 @@
+@file:Suppress("SpellCheckingInspection")
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.example.minutanutricionalapp2.ui
 
 import android.net.Uri
@@ -34,11 +37,7 @@ fun MinutaScreen(nav: NavController) {
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Minuta semanal") }
-            )
-        }
+        topBar = { TopAppBar(title = { Text("Minuta semanal") }) }
     ) { padding ->
         Column(
             Modifier
@@ -48,7 +47,6 @@ fun MinutaScreen(nav: NavController) {
                 .semantics { contentDescription = "Pantalla Minuta semanal con filtros y grilla" },
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Filtros (when, operadores, colecciones)
             FilterRow(
                 days = days,
                 selectedDay = selectedDay,
@@ -59,7 +57,6 @@ fun MinutaScreen(nav: NavController) {
                 onSortChange = { sortAsc = it }
             )
 
-            // Grilla adaptativa
             LazyVerticalGrid(
                 modifier = Modifier.weight(1f),
                 columns = GridCells.Adaptive(minSize = 160.dp),
@@ -75,7 +72,6 @@ fun MinutaScreen(nav: NavController) {
                 }
             }
 
-            // Evidencia Kotlin: funciones, when, for/while, break/continue, fold
             TextButton(
                 onClick = { showStats = !showStats },
                 modifier = Modifier.fillMaxWidth().height(56.dp)
@@ -99,23 +95,25 @@ private fun FilterRow(
     onSortChange: (Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ExposedDropdownMenuBox(
-                expanded = false,
-                onExpandedChange = { }
-            ) {
-                OutlinedTextField(
-                    value = selectedDay,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Día") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            // Ciclo simple para mostrar días como botones radio
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = selectedDay,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Día") },
+                modifier = Modifier.weight(1f)
+            )
             AssistChip(onClick = { onDayChange(nextDay(days, selectedDay)) }, label = { Text("Cambiar día") })
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             FilterChip(selected = onlyLow, onClick = { onOnlyLowChange(!onlyLow) }, label = { Text("≤ 500 kcal") })
             FilterChip(selected = sortAsc, onClick = { onSortChange(!sortAsc) }, label = { Text(if (sortAsc) "Asc" else "Desc") })
         }
@@ -132,7 +130,9 @@ private fun nextDay(days: List<String>, current: String): String {
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit) {
     ElevatedCard(
         onClick = onOpen,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 160.dp)
             .semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -153,15 +153,12 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit) {
 private fun KotlinStatsBlock(recipes: List<Recipe>) {
     val total = recipes.fold(0) { acc, r -> acc + r.calories }
     val promedio = if (recipes.isNotEmpty()) total / recipes.size else 0
-
-    // Clasificación con when + operadores de comparación
     val nivel = when {
         promedio <= 450 -> "Bajo"
         promedio in 451..520 -> "Medio"
         else -> "Alto"
     }
 
-    // while + break/continue : cuenta primeras 2 recetas ≤500 kcal
     var i = 0
     var cont = 0
     while (i < recipes.size) {
