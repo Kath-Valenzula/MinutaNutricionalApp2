@@ -7,10 +7,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.minutanutricionalapp2.ui.MinutaScreen
 import com.example.minutanutricionalapp2.ui.DetailScreen
+import com.example.minutanutricionalapp2.ui.MinutaScreen
+import com.example.minutanutricionalapp2.ui.SplashScreen
 
 sealed class Screen(val route: String) {
+    object Splash   : Screen("splash")
     object Login    : Screen("login")
     object Register : Screen("register")
     object Recover  : Screen("recover")
@@ -22,8 +24,9 @@ sealed class Screen(val route: String) {
 fun AppNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route)   { SplashScreen(navController) }
         composable(Screen.Login.route)    { LoginScreen(navController) }
         composable(Screen.Register.route) { RegisterScreen(navController) }
         composable(Screen.Recover.route)  { RecoverScreen(navController) }
