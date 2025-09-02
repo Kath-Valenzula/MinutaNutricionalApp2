@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.minutanutricionalapp2.ui.MinutaScreen
+import com.example.minutanutricionalapp2.ui.DetailScreen
 
 sealed class Screen(val route: String) {
     object Login    : Screen("login")

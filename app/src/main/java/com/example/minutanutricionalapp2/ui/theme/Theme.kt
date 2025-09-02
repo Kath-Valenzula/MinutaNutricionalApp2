@@ -1,34 +1,27 @@
 package com.example.minutanutricionalapp2.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
-private val LightColors: ColorScheme = lightColorScheme(
-    primary = PinkPrimary,
-    onPrimary = PinkOnPrimary,
-    primaryContainer = PinkContainer,
-    onPrimaryContainer = OnPinkContainer
+private val LightColors = lightColorScheme(
+    primary = Brand,
+    onPrimary = OnBrand,
+    primaryContainer = BrandContainer
 )
 
-private val DarkColors: ColorScheme = darkColorScheme(
-    primary = PinkPrimary,
-    onPrimary = PinkOnPrimary,
-    primaryContainer = PinkContainer,
-    onPrimaryContainer = OnPinkContainer
+private val DarkColors = darkColorScheme(
+    primary = Brand,
+    onPrimary = OnBrand,
+    primaryContainer = Color(0xFF8A0E3B)
 )
 
 @Composable
-fun MinutaNutricionalApp2Theme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
-    val colors = if (darkTheme) DarkColors else LightColors
+fun MinutaNutricionalApp2Theme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = LightColors,
         typography = Typography,
         content = content
     )

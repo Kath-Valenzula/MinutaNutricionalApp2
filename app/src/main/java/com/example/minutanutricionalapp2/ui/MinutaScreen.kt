@@ -9,15 +9,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.RamenDining
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.minutanutricionalapp2.data.IntakeTracker
+import com.example.minutanutricionalapp2.data.NutritionRepository
 import com.example.minutanutricionalapp2.data.RecipesRepository
 import com.example.minutanutricionalapp2.model.Recipe
 
@@ -37,8 +42,10 @@ fun MinutaScreen(nav: NavController) {
         if (sortAsc) base.sortedBy { it.calories } else base.sortedByDescending { it.calories }
     }
 
+    val snackbar = remember { SnackbarHostState() }
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Minuta semanal") }) }
+        topBar = { TopAppBar(title = { Text("Minuta semanal") }) },
+        snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
         Column(
             Modifier
@@ -48,6 +55,10 @@ fun MinutaScreen(nav: NavController) {
                 .semantics { contentDescription = "Pantalla Minuta semanal con filtros y grilla" },
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Totales del día (acumula lo agregado)
+            TotalsBar()
+
+            // Filtros con selector real de día
             FilterRow(
                 days = days,
                 selectedDay = selectedDay,
@@ -60,16 +71,27 @@ fun MinutaScreen(nav: NavController) {
 
             LazyVerticalGrid(
                 modifier = Modifier.weight(1f),
-                columns = GridCells.Adaptive(minSize = 160.dp),
+                columns = GridCells.Adaptive(minSize = 220.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filtered, key = { it.id }) { r ->
-                    RecipeCard(recipe = r, onOpen = {
-                        val encodedTitle = Uri.encode(r.title)
-                        val encodedTips = Uri.encode(r.tips)
-                        nav.navigate("detail/$encodedTitle/$encodedTips")
-                    })
+                    RecipeCard(
+                        recipe = r,
+                        onOpen = {
+                            val encodedTitle = Uri.encode(r.title)
+                            val encodedTips = Uri.encode(r.tips)
+                            nav.navigate("detail/$encodedTitle/$encodedTips")
+                        },
+                        onAdd = {
+                            NutritionRepository.get(r.id)?.let { n ->
+                                IntakeTracker.add(n)
+                                LaunchedEffect(r.id) {
+                                    snackbar.showSnackbar("Agregado: ${r.title}")
+                                }
+                            }
+                        }
+                    )
                 }
             }
 
@@ -95,56 +117,111 @@ private fun FilterRow(
     sortAsc: Boolean,
     onSortChange: (Boolean) -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedTextField(
-                value = selectedDay,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Día") },
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it },
                 modifier = Modifier.weight(1f)
-            )
-            AssistChip(onClick = { onDayChange(nextDay(days, selectedDay)) }, label = { Text("Cambiar día") })
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+            ) {
+                OutlinedTextField(
+                    value = selectedDay,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Día") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    days.forEach { d ->
+                        DropdownMenuItem(
+                            text = { Text(d) },
+                            onClick = {
+                                onDayChange(d)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
             FilterChip(selected = onlyLow, onClick = { onOnlyLowChange(!onlyLow) }, label = { Text("≤ 500 kcal") })
             FilterChip(selected = sortAsc, onClick = { onSortChange(!sortAsc) }, label = { Text(if (sortAsc) "Asc" else "Desc") })
         }
     }
 }
 
-private fun nextDay(days: List<String>, current: String): String {
-    val idx = days.indexOf(current).takeIf { it >= 0 } ?: 0
-    val next = (idx + 1) % days.size
-    return days[next]
+@Composable
+private fun TotalsBar() {
+    val totals = IntakeTracker.totals
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Row(
+            Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Stat("kcal", totals.calories)
+            Stat("Proteína (g)", totals.proteinG)
+            Stat("Carbs (g)", totals.carbsG)
+            Stat("Grasa (g)", totals.fatG)
+        }
+    }
+}
+
+@Composable private fun Stat(label: String, value: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.labelMedium)
+        Text("$value", style = MaterialTheme.typography.titleMedium)
+    }
 }
 
 @Composable
-private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit) {
+private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
     ElevatedCard(
         onClick = onOpen,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 160.dp)
+            .heightIn(min = 200.dp)
             .semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
     ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(recipe.title, style = MaterialTheme.typography.titleMedium)
-            Text("${recipe.day} • ${recipe.calories} kcal")
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.RamenDining, contentDescription = null)
+                Text(recipe.title, style = MaterialTheme.typography.titleMedium)
+            }
+            Text("${recipe.day} • ${recipe.calories} kcal", style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 recipe.tags.take(3).forEach { tag -> AssistChip(onClick = {}, label = { Text(tag) }) }
             }
             Spacer(Modifier.weight(1f, fill = true))
-            Button(onClick = onOpen, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                Text("Ver receta completa")
+            // Acciones
+            Button(
+                onClick = onAdd,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Agregar a mi día", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            OutlinedButton(
+                onClick = onOpen,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
+                Text("Ver receta completa", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -159,17 +236,14 @@ private fun KotlinStatsBlock(recipes: List<Recipe>) {
         promedio in 451..520 -> "Medio"
         else -> "Alto"
     }
-
     var i = 0
     var cont = 0
     while (i < recipes.size) {
-        val r = recipes[i]
-        i++
+        val r = recipes[i]; i++
         if (r.calories > 500) continue
         cont++
         if (cont >= 2) break
     }
-
     Column(Modifier.fillMaxWidth().semantics { contentDescription = "Estadísticas Kotlin" }) {
         Text("Total kcal visibles: $total")
         Text("Promedio por receta: $promedio ($nivel)")
