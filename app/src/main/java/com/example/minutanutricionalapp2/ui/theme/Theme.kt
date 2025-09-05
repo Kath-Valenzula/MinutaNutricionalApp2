@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import com.example.minutanutricionalapp2.data.SettingsRepository
 
 private val LightColors = lightColorScheme(
     primary = Brand,
@@ -15,13 +15,13 @@ private val LightColors = lightColorScheme(
 private val DarkColors = darkColorScheme(
     primary = Brand,
     onPrimary = OnBrand,
-    primaryContainer = Color(0xFF8A0E3B)
+    primaryContainer = BrandContainerDark
 )
 
 @Composable
 fun MinutaNutricionalApp2Theme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = LightColors,
+        colorScheme = if (SettingsRepository.darkMode) DarkColors else LightColors,
         typography = Typography,
         content = content
     )

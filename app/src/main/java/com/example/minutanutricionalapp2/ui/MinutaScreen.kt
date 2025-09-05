@@ -5,6 +5,7 @@ package com.example.minutanutricionalapp2.ui
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -12,11 +13,14 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.RamenDining
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,6 +30,8 @@ import com.example.minutanutricionalapp2.data.IntakeTracker
 import com.example.minutanutricionalapp2.data.NutritionRepository
 import com.example.minutanutricionalapp2.data.RecipesRepository
 import com.example.minutanutricionalapp2.model.Recipe
+import com.example.minutanutricionalapp2.util.drawableIdByName
+import com.example.minutanutricionalapp2.util.NetworkBanner
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,7 +54,16 @@ fun MinutaScreen(nav: NavController) {
     val scope = rememberCoroutineScope()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Minuta semanal") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Minuta semanal") },
+                actions = {
+                    IconButton(onClick = { nav.navigate("settings") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Opciones")
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
         Column(
@@ -59,6 +74,7 @@ fun MinutaScreen(nav: NavController) {
                 .semantics { contentDescription = "Pantalla Minuta semanal con filtros y grilla" },
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            NetworkBanner()
             TotalsBar()
 
             FilterRow(
@@ -88,9 +104,7 @@ fun MinutaScreen(nav: NavController) {
                         onAdd = {
                             NutritionRepository.get(r.id)?.let { n ->
                                 IntakeTracker.add(n)
-                                scope.launch {
-                                    snackbar.showSnackbar("Agregado: ${r.title}")
-                                }
+                                scope.launch { snackbar.showSnackbar("Agregado: ${r.title}") }
                             }
                         }
                     )
@@ -122,62 +136,42 @@ private fun FilterRow(
     var expanded by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = it },
-                modifier = Modifier.weight(1f)
-            ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = Modifier.weight(1f)) {
                 OutlinedTextField(
                     value = selectedDay,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Día") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                    modifier = Modifier
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
-                        .fillMaxWidth()
+                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
                 )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     days.forEach { d ->
-                        DropdownMenuItem(
-                            text = { Text(d) },
-                            onClick = {
-                                onDayChange(d)
-                                expanded = false
-                            }
-                        )
+                        DropdownMenuItem(text = { Text(d) }, onClick = { onDayChange(d); expanded = false })
                     }
                 }
             }
-            FilterChip(selected = onlyLow, onClick = { onOnlyLowChange(!onlyLow) }, label = { Text("≤ 500 kcal") })
-            FilterChip(selected = sortAsc, onClick = { onSortChange(!sortAsc) }, label = { Text(if (sortAsc) "Asc" else "Desc") })
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Checkbox(checked = onlyLow, onCheckedChange = onOnlyLowChange)
+            Text("≤ 500 kcal")
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            RadioButton(selected = sortAsc, onClick = { onSortChange(true) }); Text("Calorías ↑")
+            RadioButton(selected = !sortAsc, onClick = { onSortChange(false) }); Text("Calorías ↓")
         }
     }
 }
 
 @Composable
 private fun TotalsBar() {
-    val totals = IntakeTracker.totals
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    ) {
-        Row(
-            Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Stat("kcal", totals.calories)
-            Stat("Proteína (g)", totals.proteinG)
-            Stat("Carbs (g)", totals.carbsG)
-            Stat("Grasa (g)", totals.fatG)
+    val totals = com.example.minutanutricionalapp2.data.IntakeTracker.totals
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Stat("kcal", totals.calories); Stat("Proteína (g)", totals.proteinG); Stat("Carbs (g)", totals.carbsG); Stat("Grasa (g)", totals.fatG)
         }
     }
 }
@@ -193,12 +187,13 @@ private fun TotalsBar() {
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
     ElevatedCard(
         onClick = onOpen,
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 200.dp)
-            .semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
+        modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp).semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val resId = drawableIdByName(recipe.imageName)
+            if (resId != 0) {
+                Image(painter = painterResource(id = resId), contentDescription = "Foto de ${recipe.title}", modifier = Modifier.fillMaxWidth().height(120.dp), contentScale = ContentScale.Crop)
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.RamenDining, contentDescription = null)
                 Text(recipe.title, style = MaterialTheme.typography.titleMedium)
@@ -208,20 +203,10 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
                 recipe.tags.take(3).forEach { tag -> AssistChip(onClick = {}, label = { Text(tag) }) }
             }
             Spacer(Modifier.weight(1f, fill = true))
-            Button(
-                onClick = onAdd,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Agregar a mi día", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+                Icon(Icons.Default.Add, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Agregar a mi día", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(
-                onClick = onOpen,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp)
-            ) {
+            OutlinedButton(onClick = onOpen, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
                 Text("Ver receta completa", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
@@ -237,17 +222,9 @@ private fun KotlinStatsBlock(recipes: List<Recipe>) {
         promedio in 451..520 -> "Medio"
         else -> "Alto"
     }
-    var i = 0
-    var cont = 0
-    while (i < recipes.size) {
-        val r = recipes[i]; i++
-        if (r.calories > 500) continue
-        cont++
-        if (cont >= 2) break
-    }
+    var i = 0; var cont = 0
+    while (i < recipes.size) { val r = recipes[i]; i++; if (r.calories > 500) continue; cont++; if (cont >= 2) break }
     Column(Modifier.fillMaxWidth().semantics { contentDescription = "Estadísticas Kotlin" }) {
-        Text("Total kcal visibles: $total")
-        Text("Promedio por receta: $promedio ($nivel)")
-        Text("Primeras 2 ≤500 kcal encontradas: $cont")
+        Text("Total kcal visibles: $total"); Text("Promedio por receta: $promedio ($nivel)"); Text("Primeras 2 ≤500 kcal encontradas: $cont")
     }
 }

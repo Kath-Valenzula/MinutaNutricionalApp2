@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.minutanutricionalapp2.data.UserRepository
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +43,6 @@ fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var showHint by remember { mutableStateOf(false) }
-
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -77,10 +77,9 @@ fun LoginScreen(navController: NavController) {
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
-
             Button(
                 onClick = {
-                    if (email.isNotBlank() && pass.isNotBlank() && isValidEmail(email)) {
+                    if (email.isNotBlank() && pass.isNotBlank() && isValidEmail(email) && UserRepository.login(email, pass)) {
                         navController.navigate(Screen.Minuta.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
@@ -94,21 +93,18 @@ fun LoginScreen(navController: NavController) {
                     .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                     .semantics { contentDescription = "Botón entrar" }
             ) { Text("Entrar") }
-
             TextButton(
                 onClick = { navController.navigate(Screen.Recover.route) },
                 modifier = Modifier
                     .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                     .semantics { contentDescription = "Olvidé mi contraseña" }
             ) { Text("¿Olvidaste tu contraseña?") }
-
             OutlinedButton(
                 onClick = { navController.navigate(Screen.Register.route) },
                 modifier = Modifier
                     .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                     .semantics { contentDescription = "Crear cuenta nueva" }
             ) { Text("Crear cuenta") }
-
             if (showHint) {
                 AssistChip(
                     onClick = { showHint = false },
@@ -118,4 +114,3 @@ fun LoginScreen(navController: NavController) {
         }
     }
 }
-

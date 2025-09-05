@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.minutanutricionalapp2.ui.DetailScreen
 import com.example.minutanutricionalapp2.ui.MinutaScreen
+import com.example.minutanutricionalapp2.ui.SettingsScreen
 import com.example.minutanutricionalapp2.ui.SplashScreen
 
 sealed class Screen(val route: String) {
@@ -17,20 +18,19 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object Recover  : Screen("recover")
     object Minuta   : Screen("minuta")
+    object Settings : Screen("settings")
     object Detail   : Screen("detail/{title}/{tips}")
 }
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Splash.route
-    ) {
+    NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route)   { SplashScreen(navController) }
         composable(Screen.Login.route)    { LoginScreen(navController) }
         composable(Screen.Register.route) { RegisterScreen(navController) }
         composable(Screen.Recover.route)  { RecoverScreen(navController) }
         composable(Screen.Minuta.route)   { MinutaScreen(navController) }
+        composable(Screen.Settings.route) { SettingsScreen(navController) }
 
         composable(
             route = Screen.Detail.route,

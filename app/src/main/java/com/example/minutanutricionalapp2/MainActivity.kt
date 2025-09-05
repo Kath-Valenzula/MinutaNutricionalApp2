@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.example.minutanutricionalapp2.audio.AudioPlayer
 import com.example.minutanutricionalapp2.ui.theme.MinutaNutricionalApp2Theme
 
 class MainActivity : ComponentActivity() {
@@ -22,5 +23,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        AudioPlayer.ensurePlayingLoop(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        AudioPlayer.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        AudioPlayer.release()
     }
 }
