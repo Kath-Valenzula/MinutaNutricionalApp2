@@ -29,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,10 +42,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
-    var pass by remember { mutableStateOf("") }
+    var pass  by remember { mutableStateOf("") }
     var showHint by remember { mutableStateOf(false) }
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val focus = LocalFocusManager.current
 
     fun isValidEmail(s: String) = s.contains("@") && s.contains(".")
 
@@ -77,11 +80,18 @@ fun LoginScreen(navController: NavController) {
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
+
             Button(
                 onClick = {
-                    if (email.isNotBlank() && pass.isNotBlank() && isValidEmail(email) && UserRepository.login(email, pass)) {
-                        navController.navigate(Screen.Minuta.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                    focus.clearFocus()
+                    if (email.isNotBlank() && pass.isNotBlank() && isValidEmail(email)) {
+                        if (UserRepository.login(email, pass)) {
+                            navController.navigate(Screen.Minuta.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        } else {
+                            scope.launch { snackbarHostState.showSnackbar("Credenciales inválidas") }
+                            showHint = true
                         }
                     } else {
                         scope.launch { snackbarHostState.showSnackbar("Revisa correo y contraseña") }
@@ -93,18 +103,21 @@ fun LoginScreen(navController: NavController) {
                     .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                     .semantics { contentDescription = "Botón entrar" }
             ) { Text("Entrar") }
+
             TextButton(
                 onClick = { navController.navigate(Screen.Recover.route) },
                 modifier = Modifier
                     .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                     .semantics { contentDescription = "Olvidé mi contraseña" }
             ) { Text("¿Olvidaste tu contraseña?") }
+
             OutlinedButton(
                 onClick = { navController.navigate(Screen.Register.route) },
                 modifier = Modifier
                     .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                     .semantics { contentDescription = "Crear cuenta nueva" }
             ) { Text("Crear cuenta") }
+
             if (showHint) {
                 AssistChip(
                     onClick = { showHint = false },

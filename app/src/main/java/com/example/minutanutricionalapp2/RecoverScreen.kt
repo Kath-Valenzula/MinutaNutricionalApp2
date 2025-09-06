@@ -24,10 +24,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.minutanutricionalapp2.data.UserRepository
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +39,7 @@ fun RecoverScreen(navController: NavController) {
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val focus = LocalFocusManager.current
 
     fun isValidEmail(s: String) = s.contains("@") && s.contains(".")
 
@@ -73,12 +76,17 @@ fun RecoverScreen(navController: NavController) {
 
             Button(
                 onClick = {
+                    focus.clearFocus()
                     scope.launch {
-                        if (isValidEmail(email)) {
+                        if (!isValidEmail(email)) {
+                            snackbarHostState.showSnackbar("Ingresa un correo válido.")
+                            return@launch
+                        }
+                        if (UserRepository.exists(email)) {
                             snackbarHostState.showSnackbar("Te enviamos un link para recuperar tu contraseña.")
                             navController.popBackStack()
                         } else {
-                            snackbarHostState.showSnackbar("Ingresa un correo válido.")
+                            snackbarHostState.showSnackbar("Correo no encontrado.")
                         }
                     }
                 },

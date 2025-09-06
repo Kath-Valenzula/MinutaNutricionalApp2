@@ -2,7 +2,6 @@ package com.example.minutanutricionalapp2
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
@@ -25,9 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.minutanutricionalapp2.data.UserRepository
@@ -39,8 +38,10 @@ fun RegisterScreen(navController: NavController) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val focus = LocalFocusManager.current
 
     fun isValidEmail(s: String) = s.contains("@") && s.contains(".")
 
@@ -66,39 +67,35 @@ fun RegisterScreen(navController: NavController) {
         Column(
             Modifier
                 .padding(inner)
-                .padding(16.dp)
-                .fillMaxSize()
-                .semantics { contentDescription = "Pantalla de registro" },
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
                 value = name, onValueChange = { name = it },
                 label = { Text("Nombre") },
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = email, onValueChange = { email = it },
                 label = { Text("Correo") },
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = pass, onValueChange = { pass = it },
                 label = { Text("Contraseña") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
+
             Button(
                 onClick = {
+                    focus.clearFocus()
                     scope.launch {
                         if (name.isBlank() || !isValidEmail(email) || pass.length < 6) {
                             snackbarHostState.showSnackbar("Completa nombre, correo válido y contraseña (≥6).")
                         } else {
                             val r = UserRepository.register(name, email, pass)
                             if (r.isSuccess) {
-                                snackbarHostState.showSnackbar("Cuenta creada. Ingresa con tus datos.")
+                                snackbarHostState.showSnackbar("Cuenta creada. Ingresa con tus datos")
                                 navController.popBackStack()
                             } else {
                                 snackbarHostState.showSnackbar(r.exceptionOrNull()?.message ?: "Error al registrar")
