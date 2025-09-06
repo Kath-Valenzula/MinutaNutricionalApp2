@@ -168,20 +168,36 @@ private fun FilterRow(
 
 @Composable
 private fun TotalsBar() {
-    val totals = com.example.minutanutricionalapp2.data.IntakeTracker.totals
-    ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Stat("kcal", totals.calories); Stat("Proteína (g)", totals.proteinG); Stat("Carbs (g)", totals.carbsG); Stat("Grasa (g)", totals.fatG)
+    // Protección total: si hay cualquier problema al leer los totales, mostramos 0.
+    val safeTotals = runCatching { com.example.minutanutricionalapp2.data.IntakeTracker.totals }
+        .getOrElse { com.example.minutanutricionalapp2.data.NutritionTotals() }
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Row(
+            Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Stat("kcal", safeTotals.calories)
+            Stat("Proteína (g)", safeTotals.proteinG)
+            Stat("Carbs (g)", safeTotals.carbsG)
+            Stat("Grasa (g)", safeTotals.fatG)
         }
     }
 }
 
-@Composable private fun Stat(label: String, value: Int) {
+@Composable
+private fun Stat(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelMedium)
         Text("$value", style = MaterialTheme.typography.titleMedium)
     }
 }
+
 
 @Composable
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
