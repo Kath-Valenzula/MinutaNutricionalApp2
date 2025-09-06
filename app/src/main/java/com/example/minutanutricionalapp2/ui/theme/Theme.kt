@@ -15,7 +15,7 @@ private val LightColors = lightColorScheme(
 private val DarkColors = darkColorScheme(
     primary = Brand,
     onPrimary = OnBrand,
-    primaryContainer = BrandContainerDark
+    primaryContainer = BrandContainer
 )
 
 @Composable

@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.example.minutanutricionalapp2.ui
 
 import androidx.compose.foundation.layout.*
