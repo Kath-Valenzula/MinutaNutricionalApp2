@@ -21,12 +21,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.minutanutricionalapp2.R
 import com.example.minutanutricionalapp2.data.IntakeTracker
 import com.example.minutanutricionalapp2.data.NutritionRepository
 import com.example.minutanutricionalapp2.data.NutritionTotals
@@ -139,7 +141,6 @@ private fun FilterRow(
     var expanded by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Combo Día (sin Exposed* APIs)
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = selectedDay,
@@ -151,18 +152,9 @@ private fun FilterRow(
                     .fillMaxWidth()
                     .clickable { expanded = true }
             )
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 days.forEach { d ->
-                    DropdownMenuItem(
-                        text = { Text(d) },
-                        onClick = {
-                            onDayChange(d)
-                            expanded = false
-                        }
-                    )
+                    DropdownMenuItem(text = { Text(d) }, onClick = { onDayChange(d); expanded = false })
                 }
             }
         }
@@ -205,6 +197,9 @@ private fun Stat(label: String, value: Int) {
 
 @Composable
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
+    val ctx = LocalContext.current
+    val resId = drawableIdByName(ctx, recipe.imageName)
+
     ElevatedCard(
         onClick = onOpen,
         modifier = Modifier
@@ -213,15 +208,18 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
             .semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val resId = drawableIdByName(recipe.imageName)
-            if (resId != 0) {
-                Image(
-                    painter = painterResource(id = resId),
-                    contentDescription = "Foto de ${recipe.title}",
-                    modifier = Modifier.fillMaxWidth().height(120.dp),
-                    contentScale = ContentScale.Crop
-                )
+            val painter = if (resId != 0) {
+                painterResource(id = resId)
+            } else {
+                painterResource(id = R.drawable.ic_food_placeholder)
             }
+            Image(
+                painter = painter,
+                contentDescription = "Foto de ${recipe.title}",
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                contentScale = ContentScale.Crop
+            )
+
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.RamenDining, contentDescription = null)
                 Text(recipe.title, style = MaterialTheme.typography.titleMedium)
