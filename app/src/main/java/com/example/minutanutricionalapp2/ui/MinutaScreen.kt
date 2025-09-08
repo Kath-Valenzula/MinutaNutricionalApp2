@@ -1,5 +1,5 @@
 @file:Suppress("SpellCheckingInspection")
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.example.minutanutricionalapp2.ui
 
@@ -24,19 +24,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.minutanutricionalapp2.R
+import com.example.minutanutricionalapp2.data.CalorieGoalStore
 import com.example.minutanutricionalapp2.data.IntakeTracker
 import com.example.minutanutricionalapp2.data.NutritionRepository
 import com.example.minutanutricionalapp2.data.RecipesRepository
 import com.example.minutanutricionalapp2.model.NutritionTotals
 import com.example.minutanutricionalapp2.model.Recipe
-import com.example.minutanutricionalapp2.model.toTotals
 import com.example.minutanutricionalapp2.util.NetworkBanner
 import com.example.minutanutricionalapp2.util.drawableIdByName
 import kotlinx.coroutines.launch
+import kotlin.math.max
+import kotlin.math.min
 
 @Composable
 fun MinutaScreen(nav: NavController) {
@@ -57,13 +61,19 @@ fun MinutaScreen(nav: NavController) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // Mostrar diálogo si no hay meta configurada
+    var showGoalDialog by remember { mutableStateOf(CalorieGoalStore.goalKcal <= 0) }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Minuta semanal") },
                 actions = {
+                    IconButton(onClick = { showGoalDialog = true }) {
+                        Icon(Icons.Default.RamenDining, contentDescription = "Cambiar meta")
+                    }
                     IconButton(onClick = { nav.navigate("settings") }) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Opciones")
+                        Icon(Icons.Default.Settings, contentDescription = "Opciones")
                     }
                 }
             )
@@ -79,7 +89,10 @@ fun MinutaScreen(nav: NavController) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             NetworkBanner()
-            TotalsBar()
+
+            // Resumen nutricional con anillo de progreso tipo “Fitia”
+            val safeTotals = runCatching { IntakeTracker.totals }.getOrElse { NutritionTotals() }
+            NutritionOverview(totals = safeTotals)
 
             FilterRow(
                 days = days,
@@ -107,7 +120,7 @@ fun MinutaScreen(nav: NavController) {
                         },
                         onAdd = {
                             NutritionRepository.get(r.id)?.let { n ->
-                                IntakeTracker.add(n.toTotals())   // ← ya compila
+                                IntakeTracker.add(n)
                                 scope.launch { snackbar.showSnackbar("Agregado: ${r.title}") }
                             }
                         }
@@ -125,6 +138,124 @@ fun MinutaScreen(nav: NavController) {
             }
         }
     }
+
+    if (showGoalDialog) {
+        GoalDialog(
+            initial = if (CalorieGoalStore.goalKcal > 0) CalorieGoalStore.goalKcal.toString() else "",
+            onDismiss = { showGoalDialog = false },
+            onSave = { kcal ->
+                CalorieGoalStore.setGoal(kcal)
+                showGoalDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun GoalDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    var text by remember { mutableStateOf(initial) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Meta diaria de calorías") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = {
+                        text = it
+                        error = null
+                    },
+                    label = { Text("kcal por día") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = error != null,
+                    supportingText = { if (error != null) Text(error!!) }
+                )
+                Text("Ejemplo: 2000. Puedes cambiarla luego desde el ícono del bowl.")
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val v = text.filter { it.isDigit() }.toIntOrNull() ?: -1
+                if (v <= 0) {
+                    error = "Ingresa un número válido mayor a 0"
+                } else {
+                    onSave(v)
+                }
+            }) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
+}
+
+@Composable
+private fun NutritionOverview(totals: NutritionTotals) {
+    val goal = CalorieGoalStore.goalKcal
+    val consumed = totals.calories
+    val left = max(0, goal - consumed)
+    val progress = if (goal > 0) min(1f, consumed.toFloat() / goal) else 0f
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
+                // Pista
+                CircularProgressIndicator(
+                    progress = { 1f },
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
+                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
+                    strokeWidth = 10.dp
+                )
+                // Progreso
+                CircularProgressIndicator(
+                    progress = { progress },
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0f),
+                    strokeWidth = 10.dp
+                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(consumed.toString(), style = MaterialTheme.typography.titleMedium)
+                    Text("kcal", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            Column(Modifier.weight(1f)) {
+                Text("Resumen de hoy", style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(4.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Meta: ${goal.coerceAtLeast(0)}")
+                    Text("Restante: $left")
+                }
+                Spacer(Modifier.height(6.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    StatMini("Prot (g)", totals.proteinG)
+                    StatMini("Carbs (g)", totals.carbsG)
+                    StatMini("Grasa (g)", totals.fatG)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatMini(label: String, value: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.labelSmall)
+        Text("$value", style = MaterialTheme.typography.bodyMedium)
+    }
 }
 
 @Composable
@@ -140,15 +271,25 @@ private fun FilterRow(
     var expanded by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = Modifier.weight(1f)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it },
+                modifier = Modifier.weight(1f)
+            ) {
                 OutlinedTextField(
                     value = selectedDay,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Día") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
+                        .fillMaxWidth()
                 )
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     days.forEach { d ->
@@ -171,37 +312,9 @@ private fun FilterRow(
 }
 
 @Composable
-private fun TotalsBar() {
-    val safeTotals = runCatching { IntakeTracker.totals }
-        .getOrElse { NutritionTotals() }
-
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Stat("kcal", safeTotals.calories)
-            Stat("Proteína (g)", safeTotals.proteinG)
-            Stat("Carbs (g)", safeTotals.carbsG)
-            Stat("Grasa (g)", safeTotals.fatG)
-        }
-    }
-}
-
-@Composable
-private fun Stat(label: String, value: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Text("$value", style = MaterialTheme.typography.titleMedium)
-    }
-}
-
-@Composable
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
     val ctx = LocalContext.current
-    val resId = drawableIdByName(ctx, recipe.imageName, recipe.title)
+    val resId = com.example.minutanutricionalapp2.util.drawableIdByName(ctx, recipe.imageName, recipe.title)
 
     ElevatedCard(
         onClick = onOpen,
@@ -211,8 +324,7 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
             .semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val painter = if (resId != 0) painterResource(resId)
-                          else painterResource(R.drawable.ic_food_placeholder)
+            val painter = if (resId != 0) painterResource(resId) else painterResource(R.drawable.ic_food_placeholder)
             Image(
                 painter = painter,
                 contentDescription = "Foto de ${recipe.title}",
@@ -220,7 +332,7 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
                 contentScale = ContentScale.Crop
             )
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Filled.RamenDining, contentDescription = null)
+                Icon(Icons.Default.RamenDining, contentDescription = null)
                 Text(recipe.title, style = MaterialTheme.typography.titleMedium)
             }
             Text("${recipe.day} • ${recipe.calories} kcal", style = MaterialTheme.typography.bodyMedium)
@@ -229,7 +341,7 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
             }
             Spacer(Modifier.weight(1f, fill = true))
             Button(onClick = onAdd, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
-                Icon(Icons.Filled.Add, contentDescription = null)
+                Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Agregar a mi día", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
