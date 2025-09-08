@@ -1,5 +1,5 @@
 @file:Suppress("SpellCheckingInspection")
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.example.minutanutricionalapp2.ui
 
@@ -28,9 +28,13 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,8 +46,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.menuAnchor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -93,8 +96,8 @@ fun MinutaScreen(nav: NavController) {
             TopAppBar(
                 title = { Text("Minuta semanal") },
                 actions = {
-                    androidx.compose.material3.IconButton(onClick = { nav.navigate("settings") }) {
-                        androidx.compose.material3.Icon(Icons.Default.Settings, contentDescription = "Opciones")
+                    IconButton(onClick = { nav.navigate("settings") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Opciones")
                     }
                 }
             )
@@ -187,7 +190,9 @@ private fun FilterRow(
                     readOnly = true,
                     label = { Text("Día") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
+                        .fillMaxWidth()
                 )
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     days.forEach { d ->
@@ -239,7 +244,10 @@ private fun Stat(label: String, value: Int) {
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
     ElevatedCard(
         onClick = onOpen,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp).semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 220.dp)
+            .semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val resId = drawableIdByName(recipe.imageName)
@@ -252,7 +260,7 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                androidx.compose.material3.Icon(Icons.Default.RamenDining, contentDescription = null)
+                Icon(Icons.Default.RamenDining, contentDescription = null)
                 Text(recipe.title, style = MaterialTheme.typography.titleMedium)
             }
             Text("${recipe.day} • ${recipe.calories} kcal", style = MaterialTheme.typography.bodyMedium)
@@ -260,12 +268,20 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
                 recipe.tags.take(3).forEach { tag -> AssistChip(onClick = {}, label = { Text(tag) }) }
             }
             Spacer(Modifier.weight(1f, fill = true))
-            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
-                androidx.compose.material3.Icon(Icons.Default.Add, contentDescription = null)
+            Button(
+                onClick = onAdd,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Agregar a mi día", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(onClick = onOpen, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+            OutlinedButton(
+                onClick = onOpen,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
                 Text("Ver receta completa", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
