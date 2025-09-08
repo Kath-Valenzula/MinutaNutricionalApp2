@@ -6,53 +6,18 @@ package com.example.minutanutricionalapp2.ui
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.RamenDining
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExposedDropdownMenu
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.menuAnchor
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -174,30 +139,30 @@ private fun FilterRow(
     var expanded by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            ExposedDropdownMenuBox(
+        // Combo Día (sin Exposed* APIs)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = selectedDay,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Día") },
+                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = true }
+            )
+            DropdownMenu(
                 expanded = expanded,
-                onExpandedChange = { expanded = it },
-                modifier = Modifier.weight(1f)
+                onDismissRequest = { expanded = false }
             ) {
-                OutlinedTextField(
-                    value = selectedDay,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Día") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                    modifier = Modifier
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    days.forEach { d ->
-                        DropdownMenuItem(text = { Text(d) }, onClick = { onDayChange(d); expanded = false })
-                    }
+                days.forEach { d ->
+                    DropdownMenuItem(
+                        text = { Text(d) },
+                        onClick = {
+                            onDayChange(d)
+                            expanded = false
+                        }
+                    )
                 }
             }
         }
@@ -208,10 +173,8 @@ private fun FilterRow(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            RadioButton(selected = sortAsc, onClick = { onSortChange(true) })
-            Text("Calorías ↑")
-            RadioButton(selected = !sortAsc, onClick = { onSortChange(false) })
-            Text("Calorías ↓")
+            RadioButton(selected = sortAsc, onClick = { onSortChange(true) }); Text("Calorías ↑")
+            RadioButton(selected = !sortAsc, onClick = { onSortChange(false) }); Text("Calorías ↓")
         }
     }
 }
@@ -297,15 +260,8 @@ private fun KotlinStatsBlock(recipes: List<Recipe>) {
         promedio in 451..520 -> "Medio"
         else -> "Alto"
     }
-    var i = 0
-    var cont = 0
-    while (i < recipes.size) {
-        val r = recipes[i]
-        i++
-        if (r.calories > 500) continue
-        cont++
-        if (cont >= 2) break
-    }
+    var i = 0; var cont = 0
+    while (i < recipes.size) { val r = recipes[i]; i++; if (r.calories > 500) continue; cont++; if (cont >= 2) break }
     Column(Modifier.fillMaxWidth().semantics { contentDescription = "Estadísticas Kotlin" }) {
         Text("Total kcal visibles: $total")
         Text("Promedio por receta: $promedio ($nivel)")
