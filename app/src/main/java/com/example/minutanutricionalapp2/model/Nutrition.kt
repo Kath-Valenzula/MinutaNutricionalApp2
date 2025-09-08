@@ -1,5 +1,6 @@
 package com.example.minutanutricionalapp2.model
 
+// Nutrientes por receta 
 data class Nutrition(
     val calories: Int,
     val proteinG: Int,
@@ -15,6 +16,3 @@ data class NutritionTotals(
     val carbsG:   Int = 0,
     val fatG:     Int = 0
 )
-
-fun Nutrition.toTotals(): NutritionTotals =
-    NutritionTotals(calories, proteinG, carbsG, fatG)
