@@ -31,9 +31,11 @@ import com.example.minutanutricionalapp2.R
 import com.example.minutanutricionalapp2.data.IntakeTracker
 import com.example.minutanutricionalapp2.data.NutritionRepository
 import com.example.minutanutricionalapp2.data.RecipesRepository
+import com.example.minutanutricionalapp2.model.NutritionTotals
 import com.example.minutanutricionalapp2.model.Recipe
-import com.example.minutanutricionalapp2.util.drawableIdByName
+import com.example.minutanutricionalapp2.model.toTotals
 import com.example.minutanutricionalapp2.util.NetworkBanner
+import com.example.minutanutricionalapp2.util.drawableIdByName
 import kotlinx.coroutines.launch
 
 @Composable
@@ -105,7 +107,7 @@ fun MinutaScreen(nav: NavController) {
                         },
                         onAdd = {
                             NutritionRepository.get(r.id)?.let { n ->
-                                IntakeTracker.add(n.toTotals())
+                                IntakeTracker.add(n.toTotals())   // ← ya compila
                                 scope.launch { snackbar.showSnackbar("Agregado: ${r.title}") }
                             }
                         }
@@ -170,8 +172,8 @@ private fun FilterRow(
 
 @Composable
 private fun TotalsBar() {
-    val safeTotals = runCatching { com.example.minutanutricionalapp2.data.IntakeTracker.totals }
-        .getOrElse { com.example.minutanutricionalapp2.data.NutritionTotals() }
+    val safeTotals = runCatching { IntakeTracker.totals }
+        .getOrElse { NutritionTotals() }
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -199,8 +201,7 @@ private fun Stat(label: String, value: Int) {
 @Composable
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
     val ctx = LocalContext.current
-    // ⬇️ usa helper robusto (tolera extensión/tildes/espacios y cae al título)
-    val resId = com.example.minutanutricionalapp2.util.drawableIdByName(ctx, recipe.imageName, recipe.title)
+    val resId = drawableIdByName(ctx, recipe.imageName, recipe.title)
 
     ElevatedCard(
         onClick = onOpen,

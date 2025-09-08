@@ -1,28 +1,20 @@
 package com.example.minutanutricionalapp2.data
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-
-data class NutritionTotals(
-    val calories: Int = 0,
-    val proteinG: Int = 0,
-    val carbsG: Int = 0,
-    val fatG: Int = 0
-)
+import com.example.minutanutricionalapp2.model.NutritionTotals
 
 object IntakeTracker {
-    var totals by mutableStateOf(NutritionTotals())
-        private set
+    private val items = mutableListOf<NutritionTotals>()
 
-    fun add(n: NutritionTotals) {
-        totals = totals.copy(
-            calories = totals.calories + n.calories,
-            proteinG = totals.proteinG + n.proteinG,
-            carbsG = totals.carbsG + n.carbsG,
-            fatG = totals.fatG + n.fatG
-        )
-    }
+    fun add(n: NutritionTotals) { items += n }
+    fun clear() = items.clear()
 
-    fun reset() { totals = NutritionTotals() }
+    val totals: NutritionTotals
+        get() = items.fold(NutritionTotals()) { acc, n ->
+            NutritionTotals(
+                calories = acc.calories + n.calories,
+                proteinG = acc.proteinG + n.proteinG,
+                carbsG   = acc.carbsG   + n.carbsG,
+                fatG     = acc.fatG     + n.fatG
+            )
+        }
 }
