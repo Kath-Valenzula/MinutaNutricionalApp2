@@ -1,22 +1,21 @@
 @file:Suppress("SpellCheckingInspection")
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.example.minutanutricionalapp2.ui
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.RamenDining
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,12 +30,10 @@ import androidx.navigation.NavController
 import com.example.minutanutricionalapp2.R
 import com.example.minutanutricionalapp2.data.IntakeTracker
 import com.example.minutanutricionalapp2.data.NutritionRepository
-import com.example.minutanutricionalapp2.data.NutritionTotals
 import com.example.minutanutricionalapp2.data.RecipesRepository
 import com.example.minutanutricionalapp2.model.Recipe
-import com.example.minutanutricionalapp2.model.toTotals
-import com.example.minutanutricionalapp2.util.NetworkBanner
 import com.example.minutanutricionalapp2.util.drawableIdByName
+import com.example.minutanutricionalapp2.util.NetworkBanner
 import kotlinx.coroutines.launch
 
 @Composable
@@ -46,7 +43,7 @@ fun MinutaScreen(nav: NavController) {
     var sortAsc by remember { mutableStateOf(true) }
     var showStats by remember { mutableStateOf(false) }
 
-    val days = listOf("Todos", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+    val days = listOf("Todos","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo")
 
     val filtered = remember(selectedDay, onlyLow, sortAsc) {
         val base = RecipesRepository.byDay(selectedDay).let { list ->
@@ -64,7 +61,7 @@ fun MinutaScreen(nav: NavController) {
                 title = { Text("Minuta semanal") },
                 actions = {
                     IconButton(onClick = { nav.navigate("settings") }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Opciones")
+                        Icon(Icons.Filled.Settings, contentDescription = "Opciones")
                     }
                 }
             )
@@ -141,20 +138,20 @@ private fun FilterRow(
     var expanded by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = selectedDay,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Día") },
-                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true }
-            )
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                days.forEach { d ->
-                    DropdownMenuItem(text = { Text(d) }, onClick = { onDayChange(d); expanded = false })
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = selectedDay,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Día") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
+                )
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    days.forEach { d ->
+                        DropdownMenuItem(text = { Text(d) }, onClick = { onDayChange(d); expanded = false })
+                    }
                 }
             }
         }
@@ -173,10 +170,14 @@ private fun FilterRow(
 
 @Composable
 private fun TotalsBar() {
-    val safeTotals = runCatching { IntakeTracker.totals }.getOrElse { NutritionTotals() }
+    val safeTotals = runCatching { com.example.minutanutricionalapp2.data.IntakeTracker.totals }
+        .getOrElse { com.example.minutanutricionalapp2.data.NutritionTotals() }
+
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
     ) {
         Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Stat("kcal", safeTotals.calories)
@@ -198,7 +199,8 @@ private fun Stat(label: String, value: Int) {
 @Composable
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
     val ctx = LocalContext.current
-    val resId = drawableIdByName(ctx, recipe.imageName)
+    // ⬇️ usa helper robusto (tolera extensión/tildes/espacios y cae al título)
+    val resId = com.example.minutanutricionalapp2.util.drawableIdByName(ctx, recipe.imageName, recipe.title)
 
     ElevatedCard(
         onClick = onOpen,
@@ -208,20 +210,16 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
             .semantics { contentDescription = "Receta ${recipe.title} ${recipe.calories} kcal" }
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val painter = if (resId != 0) {
-                painterResource(id = resId)
-            } else {
-                painterResource(id = R.drawable.ic_food_placeholder)
-            }
+            val painter = if (resId != 0) painterResource(resId)
+                          else painterResource(R.drawable.ic_food_placeholder)
             Image(
                 painter = painter,
                 contentDescription = "Foto de ${recipe.title}",
                 modifier = Modifier.fillMaxWidth().height(120.dp),
                 contentScale = ContentScale.Crop
             )
-
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.RamenDining, contentDescription = null)
+                Icon(Icons.Filled.RamenDining, contentDescription = null)
                 Text(recipe.title, style = MaterialTheme.typography.titleMedium)
             }
             Text("${recipe.day} • ${recipe.calories} kcal", style = MaterialTheme.typography.bodyMedium)
@@ -229,20 +227,12 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
                 recipe.tags.take(3).forEach { tag -> AssistChip(onClick = {}, label = { Text(tag) }) }
             }
             Spacer(Modifier.weight(1f, fill = true))
-            Button(
-                onClick = onAdd,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
+            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+                Icon(Icons.Filled.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Agregar a mi día", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(
-                onClick = onOpen,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp)
-            ) {
+            OutlinedButton(onClick = onOpen, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
                 Text("Ver receta completa", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
