@@ -1,5 +1,5 @@
 @file:Suppress("SpellCheckingInspection")
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.example.minutanutricionalapp2.ui
 
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.RamenDining
@@ -24,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,6 +36,7 @@ import com.example.minutanutricionalapp2.data.NutritionRepository
 import com.example.minutanutricionalapp2.data.RecipesRepository
 import com.example.minutanutricionalapp2.model.NutritionTotals
 import com.example.minutanutricionalapp2.model.Recipe
+import com.example.minutanutricionalapp2.model.toTotals
 import com.example.minutanutricionalapp2.util.NetworkBanner
 import com.example.minutanutricionalapp2.util.drawableIdByName
 import kotlinx.coroutines.launch
@@ -60,8 +61,6 @@ fun MinutaScreen(nav: NavController) {
 
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
-    // Mostrar diálogo si no hay meta configurada
     var showGoalDialog by remember { mutableStateOf(CalorieGoalStore.goalKcal <= 0) }
 
     Scaffold(
@@ -90,7 +89,6 @@ fun MinutaScreen(nav: NavController) {
         ) {
             NetworkBanner()
 
-            // Resumen nutricional con anillo de progreso tipo “Fitia”
             val safeTotals = runCatching { IntakeTracker.totals }.getOrElse { NutritionTotals() }
             NutritionOverview(totals = safeTotals)
 
@@ -120,7 +118,7 @@ fun MinutaScreen(nav: NavController) {
                         },
                         onAdd = {
                             NutritionRepository.get(r.id)?.let { n ->
-                                IntakeTracker.add(n)
+                                IntakeTracker.add(n.toTotals())
                                 scope.launch { snackbar.showSnackbar("Agregado: ${r.title}") }
                             }
                         }
@@ -213,14 +211,12 @@ private fun NutritionOverview(totals: NutritionTotals) {
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
-                // Pista
                 CircularProgressIndicator(
                     progress = { 1f },
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
                     trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
                     strokeWidth = 10.dp
                 )
-                // Progreso
                 CircularProgressIndicator(
                     progress = { progress },
                     color = MaterialTheme.colorScheme.primary,
@@ -314,7 +310,7 @@ private fun FilterRow(
 @Composable
 private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
     val ctx = LocalContext.current
-    val resId = com.example.minutanutricionalapp2.util.drawableIdByName(ctx, recipe.imageName, recipe.title)
+    val resId = drawableIdByName(ctx, recipe.imageName, recipe.title)
 
     ElevatedCard(
         onClick = onOpen,
@@ -340,12 +336,20 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
                 recipe.tags.take(3).forEach { tag -> AssistChip(onClick = {}, label = { Text(tag) }) }
             }
             Spacer(Modifier.weight(1f, fill = true))
-            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+            Button(
+                onClick = onAdd,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Agregar a mi día", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(onClick = onOpen, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+            OutlinedButton(
+                onClick = onOpen,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
                 Text("Ver receta completa", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
@@ -361,8 +365,15 @@ private fun KotlinStatsBlock(recipes: List<Recipe>) {
         promedio in 451..520 -> "Medio"
         else -> "Alto"
     }
-    var i = 0; var cont = 0
-    while (i < recipes.size) { val r = recipes[i]; i++; if (r.calories > 500) continue; cont++; if (cont >= 2) break }
+    var i = 0
+    var cont = 0
+    while (i < recipes.size) {
+        val r = recipes[i]
+        i++
+        if (r.calories > 500) continue
+        cont++
+        if (cont >= 2) break
+    }
     Column(Modifier.fillMaxWidth().semantics { contentDescription = "Estadísticas Kotlin" }) {
         Text("Total kcal visibles: $total")
         Text("Promedio por receta: $promedio ($nivel)")
