@@ -3,7 +3,6 @@
 
 package com.example.minutanutricionalapp2.ui
 
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -29,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.core.net.toUri
 import com.example.minutanutricionalapp2.R
 import com.example.minutanutricionalapp2.data.CalorieGoalStore
 import com.example.minutanutricionalapp2.data.IntakeTracker
@@ -112,8 +112,8 @@ fun MinutaScreen(nav: NavController) {
                     RecipeCard(
                         recipe = r,
                         onOpen = {
-                            val encodedTitle = Uri.encode(r.title)
-                            val encodedTips = Uri.encode(r.tips)
+                            val encodedTitle = r.title.toUri().toString()
+                            val encodedTips  = r.tips.toUri().toString()
                             nav.navigate("detail/$encodedTitle/$encodedTips")
                         },
                         onAdd = {
@@ -128,7 +128,9 @@ fun MinutaScreen(nav: NavController) {
 
             TextButton(
                 onClick = { showStats = !showStats },
-                modifier = Modifier.fillMaxWidth().height(56.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
             ) { Text(if (showStats) "Ocultar estadísticas" else "Mostrar estadísticas (Kotlin)") }
 
             AnimatedVisibility(visible = showStats) {
