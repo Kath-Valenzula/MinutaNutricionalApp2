@@ -1,4 +1,2 @@
 package com.example.minutanutricionalapp2.model
-
-fun Nutrition.toTotals(): NutritionTotals =
-    NutritionTotals(calories, proteinG, carbsG, fatG)
+// Intencionalmente sin funciones: la conversión a totales vive en Nutrition.kt
