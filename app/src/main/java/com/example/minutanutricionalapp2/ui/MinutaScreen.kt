@@ -52,7 +52,7 @@ fun MinutaScreen(nav: NavController) {
     var sortAsc by remember { mutableStateOf(true) }
     var showStats by remember { mutableStateOf(false) }
 
-    val days = listOf("Todos","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo")
+    val days = listOf("Todos", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
 
     val filtered = remember(selectedDay, onlyLow, sortAsc) {
         val base = RecipesRepository.byDay(selectedDay).let { list ->
@@ -115,7 +115,7 @@ fun MinutaScreen(nav: NavController) {
                         recipe = r,
                         onOpen = {
                             val encodedTitle = r.title.toUri().toString()
-                            val encodedTips  = r.tips.toUri().toString()
+                            val encodedTips = r.tips.toUri().toString()
                             nav.navigate("detail/$encodedTitle/$encodedTips")
                         },
                         onAdd = {
@@ -218,43 +218,97 @@ private fun NutritionOverview(totals: NutritionTotals) {
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
-        Row(
-            Modifier
+        BoxWithConstraints(
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(12.dp)
         ) {
-            Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    progress = { 1f },
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
-                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
-                    strokeWidth = 10.dp
-                )
-                CircularProgressIndicator(
-                    progress = { progress },
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0f),
-                    strokeWidth = 10.dp
-                )
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(consumed.toString(), style = MaterialTheme.typography.titleMedium)
-                    Text("kcal", style = MaterialTheme.typography.labelSmall)
+            val scope = this
+            val isNarrow = scope.maxWidth < 420.dp
+            val circleSize = if (isNarrow) (scope.maxWidth - 64.dp).coerceAtMost(240.dp) else 288.dp
+            val stroke = circleSize / 9f
+
+            if (isNarrow) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(Modifier.size(circleSize), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = { 1f },
+                            modifier = Modifier.size(circleSize),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
+                            trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
+                            strokeWidth = stroke
+                        )
+                        CircularProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.size(circleSize),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0f),
+                            strokeWidth = stroke
+                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(consumed.toString(), style = MaterialTheme.typography.titleLarge)
+                            Text("kcal", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    Column(Modifier.fillMaxWidth()) {
+                        Text("Resumen de hoy", style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(4.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Meta: ${goal.coerceAtLeast(0)}")
+                            Text("Restante: $left")
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            StatMini("Prot (g)", totals.proteinG)
+                            StatMini("Carbs (g)", totals.carbsG)
+                            StatMini("Grasa (g)", totals.fatG)
+                        }
+                    }
                 }
-            }
-            Column(Modifier.weight(1f)) {
-                Text("Resumen de hoy", style = MaterialTheme.typography.titleSmall)
-                Spacer(Modifier.height(4.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Meta: ${goal.coerceAtLeast(0)}")
-                    Text("Restante: $left")
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    StatMini("Prot (g)", totals.proteinG)
-                    StatMini("Carbs (g)", totals.carbsG)
-                    StatMini("Grasa (g)", totals.fatG)
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(Modifier.size(circleSize), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = { 1f },
+                            modifier = Modifier.size(circleSize),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
+                            trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
+                            strokeWidth = stroke
+                        )
+                        CircularProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.size(circleSize),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0f),
+                            strokeWidth = stroke
+                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(consumed.toString(), style = MaterialTheme.typography.titleLarge)
+                            Text("kcal", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("Resumen de hoy", style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(4.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Meta: ${goal.coerceAtLeast(0)}")
+                            Text("Restante: $left")
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            StatMini("Prot (g)", totals.proteinG)
+                            StatMini("Carbs (g)", totals.carbsG)
+                            StatMini("Grasa (g)", totals.fatG)
+                        }
+                    }
                 }
             }
         }
@@ -339,7 +393,9 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
             Image(
                 painter = painter,
                 contentDescription = "Foto de ${recipe.title}",
-                modifier = Modifier.fillMaxWidth().height(120.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
                 contentScale = ContentScale.Crop
             )
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -353,7 +409,9 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
             Spacer(Modifier.weight(1f, fill = true))
             Button(
                 onClick = onAdd,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
@@ -362,7 +420,9 @@ private fun RecipeCard(recipe: Recipe, onOpen: () -> Unit, onAdd: () -> Unit) {
             }
             OutlinedButton(
                 onClick = onOpen,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp)
             ) {
                 Text("Ver receta completa", maxLines = 1, overflow = TextOverflow.Ellipsis)
