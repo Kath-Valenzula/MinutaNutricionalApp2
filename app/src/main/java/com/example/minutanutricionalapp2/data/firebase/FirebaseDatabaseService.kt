@@ -1,35 +1,24 @@
 package com.example.minutanutricionalapp2.data.firebase
 
-import com.example.minutanutricionalapp2.model.NutritionTotals
-import com.example.minutanutricionalapp2.util.todayKey
+import com.example.minutanutricionalapp2.model.IntakeRecord
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.tasks.await
-
-data class FirebaseIntake(
-    val recipeId: String,
-    val title: String,
-    val calories: Int,
-    val proteinG: Int,
-    val carbsG: Int,
-    val fatG: Int,
-    val timestamp: Long = System.currentTimeMillis()
-)
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object FirebaseDatabaseService {
-    private val rootRef by lazy { Firebase.database.reference }
+    private val db by lazy { Firebase.database.reference }
+    private val auth by lazy { FirebaseAuth.getInstance() }
 
-    suspend fun addIntakeForToday(uid: String, recipeId: String, title: String, t: NutritionTotals): Result<Unit> = runCatching {
-        val dateKey = todayKey()
-        val intake = FirebaseIntake(
-            recipeId = recipeId,
-            title = title,
-            calories = t.calories,
-            proteinG = t.proteinG,
-            carbsG = t.carbsG,
-            fatG = t.fatG
-        )
-        rootRef.child("intakes").child(uid).child(dateKey).push().setValue(intake).await()
-        Unit
+    fun saveIntakeForToday(record: IntakeRecord) {
+        val uid = auth.currentUser?.uid ?: return
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        db.child("intakes")
+            .child(uid)
+            .child(date)
+            .child(record.recipeId.toString())
+            .setValue(record)
     }
 }

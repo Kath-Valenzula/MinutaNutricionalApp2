@@ -1,5 +1,6 @@
 package com.example.minutanutricionalapp2
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +30,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.minutanutricionalapp2.data.UserRepository
+import com.example.minutanutricionalapp2.data.firebase.FirebaseAuthService
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +49,26 @@ fun RegisterScreen(navController: NavController) {
     val focus = LocalFocusManager.current
 
     fun isValidEmail(s: String) = s.contains("@") && s.contains(".")
+
+    fun friendlyAuthError(e: Exception): String {
+        Log.e("Register", "Firebase signUp error", e)
+        return when (e) {
+            is FirebaseAuthWeakPasswordException ->
+                "La contraseña es muy débil (mínimo 6 caracteres)."
+            is FirebaseAuthInvalidCredentialsException ->
+                "El correo no tiene un formato válido."
+            is FirebaseAuthUserCollisionException ->
+                "Ese correo ya está registrado."
+            is FirebaseAuthException -> {
+                // Ej: ERROR_OPERATION_NOT_ALLOWED cuando Email/Password está deshabilitado en Firebase
+                if (e.errorCode.equals("ERROR_OPERATION_NOT_ALLOWED", ignoreCase = true))
+                    "El método Email/Password está deshabilitado en Firebase. Actívalo en Auth → Métodos de acceso."
+                else
+                    e.localizedMessage ?: "Error de autenticación (${e.errorCode})."
+            }
+            else -> e.localizedMessage ?: "Error inesperado al registrar."
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -93,12 +118,13 @@ fun RegisterScreen(navController: NavController) {
                         if (name.isBlank() || !isValidEmail(email) || pass.length < 6) {
                             snackbarHostState.showSnackbar("Completa nombre, correo válido y contraseña (≥6).")
                         } else {
-                            val r = UserRepository.register(name, email, pass)
-                            if (r.isSuccess) {
+                            try {
+                                FirebaseAuthService.register(email, pass)
+                                if (name.isNotBlank()) FirebaseAuthService.updateDisplayName(name)
                                 snackbarHostState.showSnackbar("Cuenta creada. Ingresa con tus datos")
                                 navController.popBackStack()
-                            } else {
-                                snackbarHostState.showSnackbar(r.exceptionOrNull()?.message ?: "Error al registrar")
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar(friendlyAuthError(e))
                             }
                         }
                     }

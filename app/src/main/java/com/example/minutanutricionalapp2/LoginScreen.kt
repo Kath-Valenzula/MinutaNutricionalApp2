@@ -35,7 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.minutanutricionalapp2.data.UserRepository
+import com.example.minutanutricionalapp2.data.firebase.FirebaseAuthService
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,18 +84,21 @@ fun LoginScreen(navController: NavController) {
             Button(
                 onClick = {
                     focus.clearFocus()
-                    if (email.isNotBlank() && pass.isNotBlank() && isValidEmail(email)) {
-                        if (UserRepository.login(email, pass)) {
-                            navController.navigate(Screen.Minuta.route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
+                    scope.launch {
+                        if (email.isNotBlank() && pass.isNotBlank() && isValidEmail(email)) {
+                            try {
+                                FirebaseAuthService.login(email, pass)
+                                navController.navigate(Screen.Minuta.route) {
+                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                }
+                            } catch (_: Exception) {
+                                snackbarHostState.showSnackbar("Credenciales inválidas")
+                                showHint = true
                             }
                         } else {
-                            scope.launch { snackbarHostState.showSnackbar("Credenciales inválidas") }
+                            snackbarHostState.showSnackbar("Revisa correo y contraseña")
                             showHint = true
                         }
-                    } else {
-                        scope.launch { snackbarHostState.showSnackbar("Revisa correo y contraseña") }
-                        showHint = true
                     }
                 },
                 modifier = Modifier

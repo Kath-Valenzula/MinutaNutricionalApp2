@@ -29,7 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.minutanutricionalapp2.data.UserRepository
+import com.example.minutanutricionalapp2.data.firebase.FirebaseAuthService
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,11 +82,12 @@ fun RecoverScreen(navController: NavController) {
                             snackbarHostState.showSnackbar("Ingresa un correo válido.")
                             return@launch
                         }
-                        if (UserRepository.exists(email)) {
+                        try {
+                            FirebaseAuthService.sendPasswordReset(email)
                             snackbarHostState.showSnackbar("Te enviamos un link para recuperar tu contraseña.")
                             navController.popBackStack()
-                        } else {
-                            snackbarHostState.showSnackbar("Correo no encontrado.")
+                        } catch (_: Exception) {
+                            snackbarHostState.showSnackbar("Correo no registrado.")
                         }
                     }
                 },
