@@ -65,6 +65,22 @@ fun MinutaScreen(nav: NavController) {
     val scope = rememberCoroutineScope()
     var showGoalDialog by remember { mutableStateOf(CalorieGoalStore.goalKcal <= 0) }
 
+    LaunchedEffect(Unit) {
+        FirebaseDatabaseService.listenToday { list ->
+            IntakeTracker.clear()
+            list.forEach { rec ->
+                IntakeTracker.add(
+                    NutritionTotals(
+                        calories = rec.calories,
+                        proteinG = rec.proteinG,
+                        carbsG = rec.carbsG,
+                        fatG = rec.fatG
+                    )
+                )
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

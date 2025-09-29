@@ -86,8 +86,8 @@ fun RecoverScreen(navController: NavController) {
                             FirebaseAuthService.sendPasswordReset(email)
                             snackbarHostState.showSnackbar("Te enviamos un link para recuperar tu contraseña.")
                             navController.popBackStack()
-                        } catch (_: Exception) {
-                            snackbarHostState.showSnackbar("Correo no registrado.")
+                        } catch (e: Exception) {
+                            snackbarHostState.showSnackbar(e.message ?: "Correo no registrado.")
                         }
                     }
                 },
