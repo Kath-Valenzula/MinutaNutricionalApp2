@@ -65,6 +65,7 @@ fun MinutaScreen(nav: NavController) {
     val scope = rememberCoroutineScope()
     var showGoalDialog by remember { mutableStateOf(CalorieGoalStore.goalKcal <= 0) }
 
+    // HIDRATAR 
     LaunchedEffect(Unit) {
         FirebaseDatabaseService.listenToday { list ->
             IntakeTracker.clear()
@@ -212,11 +213,8 @@ private fun GoalDialog(
         confirmButton = {
             TextButton(onClick = {
                 val v = text.filter { it.isDigit() }.toIntOrNull() ?: -1
-                if (v <= 0) {
-                    error = "Ingresa un número válido mayor a 0"
-                } else {
-                    onSave(v)
-                }
+                if (v <= 0) error = "Ingresa un número válido mayor a 0"
+                else onSave(v)
             }) { Text("Guardar") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }

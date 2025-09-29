@@ -28,7 +28,7 @@ object FirebaseDatabaseService {
             .setValue(record)
     }
 
-    // READ 
+    // READ
     fun listenToday(onList: (List<IntakeRecord>) -> Unit) {
         val uid = auth.currentUser?.uid ?: return
         val date = todayKey()
@@ -44,7 +44,7 @@ object FirebaseDatabaseService {
             })
     }
 
-    // DELETE 
+    // DELETE
     fun deleteIntakeForToday(recipeId: Int) {
         val uid = auth.currentUser?.uid ?: return
         val date = todayKey()
