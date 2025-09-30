@@ -12,12 +12,6 @@ object FirebaseAuthService {
         return res.user?.uid ?: throw IllegalStateException("UID nulo")
     }
 
-    suspend fun updateDisplayName(name: String) {
-        val user = auth.currentUser ?: return
-        val req = userProfileChangeRequest { displayName = name }
-        user.updateProfile(req).await()
-    }
-
     suspend fun login(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password).await()
     }
@@ -26,9 +20,25 @@ object FirebaseAuthService {
         auth.sendPasswordResetEmail(email).await()
     }
 
-    fun currentUid(): String? = auth.currentUser?.uid
-
-    fun signOut() {
-        auth.signOut()
+    suspend fun updateDisplayName(name: String) {
+        val user = auth.currentUser ?: throw IllegalStateException("No autenticado")
+        val req = userProfileChangeRequest { displayName = name }
+        user.updateProfile(req).await()
     }
+
+    suspend fun updateEmail(email: String) {
+        val user = auth.currentUser ?: throw IllegalStateException("No autenticado")
+        user.updateEmail(email).await()
+    }
+
+    suspend fun updatePassword(newPass: String) {
+        val user = auth.currentUser ?: throw IllegalStateException("No autenticado")
+        user.updatePassword(newPass).await()
+    }
+
+    fun currentUid(): String? = auth.currentUser?.uid
+    fun currentEmail(): String? = auth.currentUser?.email
+    fun currentName(): String? = auth.currentUser?.displayName
+
+    fun signOut() { auth.signOut() }
 }
